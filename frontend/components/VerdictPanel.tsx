@@ -27,10 +27,10 @@ export default function VerdictPanel({
   else if (score < 7) riskLevel = "MEDIUM RISK";
 
   const repoMeta = {
-    commits: "N/A", // Backend doesn't fetch commits
-    contributors: "N/A", // Backend doesn't fetch contributors
+    commits: analysisData?.meta?.commits?.toLocaleString() || "N/A",
+    contributors: analysisData?.meta?.contributors?.toLocaleString() || "N/A",
     language: analysisData?.meta?.primaryLanguage || "Unknown",
-    activeSpan: "N/A", // Not provided by current backend
+    activeSpan: analysisData?.meta?.activeSpan || "N/A",
   };
 
   const health = {

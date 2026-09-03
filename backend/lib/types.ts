@@ -12,6 +12,9 @@ export interface RepoMeta {
   stars: number;
   default_branch?: string;
   html_url?: string;
+  commits?: number;
+  contributors?: number;
+  activeSpan?: string;
 }
 
 export interface CategoryScores {

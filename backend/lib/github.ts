@@ -72,6 +72,59 @@ export async function fetchGithubRepoData(repoUrl: string): Promise<{
   const metaJson = await metaRes.json();
   const defaultBranch = metaJson.default_branch;
 
+  // 1a. Fetch commit count and active span
+  let commitCount = 1;
+  let activeSpan = "Unknown";
+  try {
+    const commitsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=1`, { headers });
+    if (commitsRes.ok) {
+      const linkHeader = commitsRes.headers.get("Link");
+      if (linkHeader) {
+        const match = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (match) {
+          commitCount = parseInt(match[1], 10);
+        }
+      }
+      const commitsJson = await commitsRes.json();
+      const lastCommitDate = commitsJson[0]?.commit?.author?.date;
+      if (lastCommitDate) {
+        const lastYear = new Date(lastCommitDate).getFullYear();
+        let firstYear = lastYear;
+        if (commitCount > 1) {
+          const firstCommitRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=1&page=${commitCount}`, { headers });
+          if (firstCommitRes.ok) {
+            const firstCommitJson = await firstCommitRes.json();
+            const firstCommitDate = firstCommitJson[0]?.commit?.author?.date;
+            if (firstCommitDate) firstYear = new Date(firstCommitDate).getFullYear();
+          }
+        }
+        activeSpan = firstYear === lastYear ? `${firstYear}` : `${firstYear} - ${lastYear}`;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch commits", e);
+  }
+
+  // 1b. Fetch contributors count
+  let contributorsCount = 1;
+  try {
+    const contribsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contributors?per_page=1&anon=1`, { headers });
+    if (contribsRes.ok) {
+      const linkHeader = contribsRes.headers.get("Link");
+      if (linkHeader) {
+        const match = linkHeader.match(/page=(\d+)>; rel="last"/);
+        if (match) {
+          contributorsCount = parseInt(match[1], 10);
+        }
+      } else {
+        const contribsJson = await contribsRes.json();
+        contributorsCount = contribsJson.length || 1;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch contributors", e);
+  }
+
   const meta: RepoMeta = {
     owner: metaJson.owner.login,
     repo: metaJson.name,
@@ -80,6 +133,9 @@ export async function fetchGithubRepoData(repoUrl: string): Promise<{
     stars: metaJson.stargazers_count,
     default_branch: metaJson.default_branch,
     html_url: metaJson.html_url,
+    commits: commitCount,
+    contributors: contributorsCount,
+    activeSpan: activeSpan,
   };
 
   // 2. Fetch full file tree
