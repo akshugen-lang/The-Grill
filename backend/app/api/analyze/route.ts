@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204 });
+}
 import { fetchGithubRepoData } from '@/lib/github';
 import { runAnalysisPipeline } from '@/lib/agents';
 import { runStaticScanner } from '@/lib/scanner';

@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204 });
+}
 import { FixVerificationRequest, FixVerificationResponse, ApiError } from '@/lib/types';
 import { verifyFix } from '@/lib/gemini';
 

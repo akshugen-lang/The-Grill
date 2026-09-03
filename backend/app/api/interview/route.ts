@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204 });
+}
 import { evaluateInterviewTurn } from '@/lib/gemini';
 import { InterviewRequest, ApiError, InterviewResponse } from '@/lib/types';
 
