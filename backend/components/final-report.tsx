@@ -96,7 +96,7 @@ export default function FinalReport({ data }: { data: AnalyzeResponse }) {
                   </div>
                   <div className="flex items-center gap-4 self-end md:self-center">
                     {vResult && (
-                      vResult.verified 
+                      (vResult.verified ?? vResult.resolved)
                         ? <span className="flex items-center gap-1 text-emerald-400 text-sm font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"><CheckCircle2 size={16}/> Verified</span>
                         : <span className="flex items-center gap-1 text-red-400 text-sm font-bold bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20"><XCircle size={16}/> Failed Verify</span>
                     )}
@@ -162,10 +162,10 @@ export default function FinalReport({ data }: { data: AnalyzeResponse }) {
                     )}
 
                     {vResult && (
-                      <div className={`p-5 rounded-xl border ${vResult.verified ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-red-500/10 border-red-500/30 text-red-200'}`}>
+                      <div className={`p-5 rounded-xl border ${(vResult.verified ?? vResult.resolved) ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-red-500/10 border-red-500/30 text-red-200'}`}>
                         <div className="flex gap-3">
-                          {vResult.verified ? <CheckCircle2 className="shrink-0 text-emerald-400 mt-0.5" /> : <AlertTriangle className="shrink-0 text-red-400 mt-0.5" />}
-                          <p className="text-sm">{vResult.feedback}</p>
+                          {(vResult.verified ?? vResult.resolved) ? <CheckCircle2 className="shrink-0 text-emerald-400 mt-0.5" /> : <AlertTriangle className="shrink-0 text-red-400 mt-0.5" />}
+                          <p className="text-sm">{vResult.feedback || vResult.remaining_risk}</p>
                         </div>
                       </div>
                     )}

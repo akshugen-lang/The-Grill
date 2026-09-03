@@ -44,7 +44,12 @@ function isEntryPoint(path: string) {
   return name.startsWith("main.") || name.startsWith("index.") || name.startsWith("app.") || name.startsWith("server.");
 }
 
-export async function fetchGithubRepoData(repoUrl: string): Promise<{ meta: RepoMeta, files: FileContent[] }> {
+export async function fetchGithubRepoData(repoUrl: string): Promise<{
+  meta: RepoMeta;
+  files: FileContent[];
+  repo_health: RepoHealth;
+  analysis_coverage: AnalysisCoverage;
+}> {
   const parsed = parseGithubUrl(repoUrl);
   if (!parsed) {
     throw new Error("Invalid GitHub URL");

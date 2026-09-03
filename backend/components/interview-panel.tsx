@@ -73,7 +73,7 @@ export default function InterviewPanel({ data, onFinish }: { data: AnalyzeRespon
 
       setChatHistory(prev => [...prev, { 
         role: 'system', 
-        content: `Verdict: ${responseData.verdict.toUpperCase()} - ${responseData.feedback}`,
+        content: `Verdict: ${(responseData.verdict || 'PENDING').toUpperCase()} - ${responseData.feedback}`,
         missing: responseData.missing_points,
         score: responseData.score
       }]);

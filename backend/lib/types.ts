@@ -1,6 +1,7 @@
 export interface FileContent {
   path: string;
   content: string;
+  size?: number;
 }
 
 export interface RepoMeta {
@@ -106,6 +107,7 @@ export interface InterviewResponse {
   verdict?: "strong" | "partial" | "weak";
   score?: number;
   missing_points?: string[];
+  follow_up_question?: string;
 }
 
 export interface FixVerificationRequest {
@@ -116,9 +118,11 @@ export interface FixVerificationRequest {
 
 export interface FixVerificationResponse {
   resolved: boolean;
-  confidence: number;
+  verified?: boolean;
+  confidence: number | string;
   remaining_risk?: string;
   next_action: string;
+  feedback?: string;
 }
 
 export interface ApiError {
