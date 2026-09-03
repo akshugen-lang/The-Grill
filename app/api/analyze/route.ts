@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchGithubRepoData } from '@/lib/github';
-import { analyzeCodebase } from '@/lib/gemini';
+import { runAnalysisPipeline } from '@/lib/agents';
 import { AnalyzeResponse, ApiError } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     try {
-      const analysis = await analyzeCodebase(repoData.meta, repoData.files);
+      const analysis = await runAnalysisPipeline(repoData.files);
       const response: AnalyzeResponse = {
         meta: repoData.meta,
         files: repoData.files,
