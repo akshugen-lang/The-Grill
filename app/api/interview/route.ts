@@ -5,8 +5,8 @@ import { InterviewRequest, ApiError, InterviewResponse } from '@/lib/types';
 export async function POST(request: Request) {
   try {
     const body: InterviewRequest = await request.json();
-    if (!body.question || !body.user_answer) {
-      return NextResponse.json({ error: true, message: "Invalid interview request" } as ApiError, { status: 400 });
+    if (!body.history || !Array.isArray(body.history) || body.history.length === 0) {
+      return NextResponse.json({ error: true, message: "Invalid interview request: history array is required" } as ApiError, { status: 400 });
     }
 
     try {

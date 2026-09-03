@@ -2,23 +2,37 @@ import { GoogleGenerativeAI, Schema, SchemaType } from "@google/generative-ai";
 import { HardQuestion, Improvement, AgentName } from "../types";
 import crypto from "crypto";
 
-const apiKey = process.env.GEMINI_API_KEY || "";
-export const genAI = new GoogleGenerativeAI(apiKey);
+export function getGenAI() {
+  const apiKey = process.env.GEMINI_API_KEY || "";
+  return new GoogleGenerativeAI(apiKey);
+}
 
 export const AgentResponseSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
-    score: { type: SchemaType.NUMBER },
+    score: { type: SchemaType.NUMBER, description: "Score out of 10" },
     hard_questions: {
       type: SchemaType.ARRAY,
       items: {
         type: SchemaType.OBJECT,
         properties: {
+          id: { type: SchemaType.STRING },
           question: { type: SchemaType.STRING },
-          file_reference: { type: SchemaType.STRING },
+          difficulty: { type: SchemaType.STRING, description: "medium, hard, or extreme" },
+          file_evidence: {
+            type: SchemaType.OBJECT,
+            properties: {
+              path: { type: SchemaType.STRING },
+              symbol: { type: SchemaType.STRING },
+              line_range: { type: SchemaType.STRING },
+              excerpt: { type: SchemaType.STRING }
+            },
+            required: ["path"]
+          },
           why_this_matters: { type: SchemaType.STRING },
+          strong_answer_points: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
         },
-        required: ["question", "file_reference", "why_this_matters"]
+        required: ["id", "question", "difficulty", "file_evidence", "why_this_matters", "strong_answer_points"]
       }
     },
     improvements: {
@@ -26,11 +40,17 @@ export const AgentResponseSchema: Schema = {
       items: {
         type: SchemaType.OBJECT,
         properties: {
+          id: { type: SchemaType.STRING },
           area: { type: SchemaType.STRING },
-          file_reference: { type: SchemaType.STRING },
+          severity: { type: SchemaType.STRING, description: "critical, high, medium, or low" },
+          confidence: { type: SchemaType.STRING, description: "confirmed, likely, possible, or insufficient evidence" },
+          code_evidence: { type: SchemaType.STRING },
+          impact: { type: SchemaType.STRING },
           suggestion: { type: SchemaType.STRING },
+          fix_code: { type: SchemaType.STRING },
+          verification_steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
         },
-        required: ["area", "file_reference", "suggestion"]
+        required: ["id", "area", "severity", "confidence", "code_evidence", "impact", "suggestion"]
       }
     }
   },

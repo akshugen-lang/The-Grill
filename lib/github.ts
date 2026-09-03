@@ -1,4 +1,5 @@
-import { RepoMeta, FileContent } from "./types";
+import { RepoMeta, FileContent, RepoHealth, AnalysisCoverage } from "./types";
+import { computeRepoHealth, computeAnalysisCoverage } from "./health";
 
 const ALLOWED_EXTENSIONS = [
   ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".go",
@@ -72,6 +73,8 @@ export async function fetchGithubRepoData(repoUrl: string): Promise<{ meta: Repo
     description: metaJson.description,
     primaryLanguage: metaJson.language,
     stars: metaJson.stargazers_count,
+    default_branch: metaJson.default_branch,
+    html_url: metaJson.html_url,
   };
 
   // 2. Fetch full file tree
@@ -135,5 +138,8 @@ export async function fetchGithubRepoData(repoUrl: string): Promise<{ meta: Repo
     })
   );
 
-  return { meta, files: fileContents };
+  const repo_health = computeRepoHealth(allFiles, allowedFiles, selectedFiles, fileContents);
+  const analysis_coverage = computeAnalysisCoverage(allowedFiles, selectedFiles, entryPoints, others, treeJson.truncated || false);
+
+  return { meta, files: fileContents, repo_health, analysis_coverage };
 }

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { fetchGithubRepoData } from '@/lib/github';
 import { runAnalysisPipeline } from '@/lib/agents';
+import { runStaticScanner } from '@/lib/scanner';
 import { AnalyzeResponse, ApiError } from '@/lib/types';
+
+// Force maximum execution time to 60 seconds for serverless functions (like Vercel)
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -26,10 +30,19 @@ export async function POST(request: Request) {
     }
 
     try {
-      const analysis = await runAnalysisPipeline(repoData.files);
+      const staticFindings = runStaticScanner(repoData.files, repoData.repo_health);
+      const analysis = await runAnalysisPipeline(
+        repoData.files, 
+        staticFindings,
+        repoData.meta,
+        repoData.repo_health,
+        repoData.analysis_coverage
+      );
       const response: AnalyzeResponse = {
         meta: repoData.meta,
         files: repoData.files,
+        repo_health: repoData.repo_health,
+        analysis_coverage: repoData.analysis_coverage,
         ...analysis
       };
       return NextResponse.json(response);

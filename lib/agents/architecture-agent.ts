@@ -1,12 +1,12 @@
 import { FileContent } from "../types";
-import { genAI, AgentResponseSchema, processAgentResponse, AgentProcessedResponse } from "./base";
+import { getGenAI, AgentResponseSchema, processAgentResponse, AgentProcessedResponse } from "./base";
 
 export async function runArchitectureAgent(files: FileContent[]): Promise<AgentProcessedResponse> {
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "<key>") {
     throw new Error("API_KEY_INVALID");
   }
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-pro",
+  const model = getGenAI().getGenerativeModel({
+    model: "gemini-3.1-flash-lite",
     systemInstruction: "You are the Architecture Agent. Your focus is strictly on design, structure, coupling, and scalability. Identify tight coupling, poor separation of concerns, scalability bottlenecks, or overly complex designs. Give an honest score (0-10), generate hard questions, and suggest improvements. Output valid JSON matching the schema.",
     generationConfig: {
       responseMimeType: "application/json",
