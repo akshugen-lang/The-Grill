@@ -14,7 +14,7 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     let errorMessage = `API Error: ${response.status}`;
     try {
       const errorData = await response.json();
-      errorMessage = errorData.error || errorMessage;
+      errorMessage = errorData.message || errorData.error || errorMessage;
     } catch (e) {
       // Ignored
     }
