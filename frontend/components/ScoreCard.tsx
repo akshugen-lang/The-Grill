@@ -2,22 +2,20 @@
 
 import React from "react";
 import { AnswerRecord } from "@/types/grill";
-import { MOCK_IMPROVEMENTS, AGENTS_DATA, MOCK_PROS, MOCK_CONS } from "@/data/mockData";
+import { AGENTS_DATA } from "@/data/mockData";
 import ImprovementsList from "./ImprovementsList";
 
 interface ScoreCardProps {
   repoUrl: string;
   records: AnswerRecord[];
-  pros?: string[];
-  cons?: string[];
+  analysisData: any;
   onReset: () => void;
 }
 
 export default function ScoreCard({
   repoUrl,
   records,
-  pros = MOCK_PROS,
-  cons = MOCK_CONS,
+  analysisData,
   onReset,
 }: ScoreCardProps) {
   // Compute Interview Performance Score out of 10
@@ -41,18 +39,33 @@ export default function ScoreCard({
 
   const interviewScore =
     maxPoints > 0 ? ((earnedPoints / maxPoints) * 10).toFixed(1) : "7.5";
-  const codeScore = "7.8";
+  const codeScore = (analysisData?.overall_score || 0).toFixed(1);
 
-  // Category scores (derived from session performance & mock baseline)
+  // Category scores (derived from backend response)
+  const backendScores = analysisData?.category_scores || { architecture: 0, security: 0, innovation: 0 };
   const categoryScores = [
-    { name: "Architecture", score: 8.0, agent: AGENTS_DATA.architecture },
-    {
-      name: "Security",
-      score: parseFloat(interviewScore) >= 7.0 ? 7.2 : 5.5,
-      agent: AGENTS_DATA.security,
-    },
-    { name: "Innovation", score: 8.5, agent: AGENTS_DATA.innovation },
+    { name: "Architecture", score: backendScores.architecture, agent: AGENTS_DATA.architecture },
+    { name: "Security", score: backendScores.security, agent: AGENTS_DATA.security },
+    { name: "Innovation", score: backendScores.innovation, agent: AGENTS_DATA.innovation },
   ];
+
+  const executiveVerdict = analysisData?.verdict || "No final verdict provided.";
+  const improvements = analysisData?.improvements || [];
+  
+  // Synthesize pros and cons from health and coverage
+  const pros = [
+    analysisData?.repo_health?.has_tests ? "Test suite detected." : "",
+    analysisData?.repo_health?.has_readme ? "README documentation available." : "",
+    analysisData?.repo_health?.has_ci ? "Continuous Integration pipeline configured." : ""
+  ].filter(Boolean);
+  if (pros.length === 0) pros.push("Basic repository structure initialized.");
+
+  const cons = [
+    !analysisData?.repo_health?.has_tests ? "No tests found in repository." : "",
+    !analysisData?.repo_health?.has_ci ? "Missing CI/CD workflows." : "",
+    (analysisData?.improvements || []).length > 0 ? `Identified ${analysisData.improvements.length} major improvement areas.` : ""
+  ].filter(Boolean);
+  if (cons.length === 0) cons.push("No major red flags detected.");
 
   const getBarColorClass = (score: number) => {
     if (score < 5.0) return "bg-[#B05A48]"; // Red / Danger
@@ -159,9 +172,7 @@ export default function ScoreCard({
           <span>📜 EXECUTIVE VERDICT SUMMARY</span>
         </div>
         <blockquote className="text-lg font-serif text-[#EAE6DC] italic leading-relaxed">
-          &ldquo;The codebase demonstrates robust architectural foundations and dynamic module organization.
-          However, authorization middleware security requires urgent hardening around key rotation lifecycle
-          and token revocation before production deployment.&rdquo;
+          &ldquo;{executiveVerdict}&rdquo;
         </blockquote>
         <div className="mono text-xs text-[#647169] text-right">
           — Panel Verdict Consensus (Architecture, Security, Innovation)
@@ -208,7 +219,7 @@ export default function ScoreCard({
         <h2 className="text-sm mono uppercase font-medium tracking-wider text-[#EAE6DC]">
           HOW TO MAKE THIS THE BEST VERSION OF ITSELF
         </h2>
-        <ImprovementsList improvements={MOCK_IMPROVEMENTS} />
+        <ImprovementsList improvements={improvements} />
       </div>
     </div>
   );

@@ -14,16 +14,29 @@ export default function Home() {
   const [screen, setScreen] = useState<Screen>("landing");
   const [repoUrl, setRepoUrl] = useState("");
   const [sessionResults, setSessionResults] = useState<AnswerRecord[]>([]);
+  
+  // Real Data State
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // 1. Submit Repo -> Scanning -> Verdict Panel
-  const handleRepoSubmit = (url: string) => {
+  const handleRepoSubmit = async (url: string) => {
     setRepoUrl(url);
     setScreen("scanning");
+    setErrorMsg("");
 
-    // Simulate scanning AST before displaying initial verdict panel
-    setTimeout(() => {
+    try {
+      const { fetchApi } = await import("@/lib/api");
+      const data = await fetchApi<any>("/api/analyze", {
+        method: "POST",
+        body: JSON.stringify({ repoUrl: url }),
+      });
+      setAnalysisData(data);
       setScreen("verdict");
-    }, 2500);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to analyze repository");
+      setScreen("landing");
+    }
   };
 
   // 2. Verdict Panel -> Interview Session
@@ -41,6 +54,7 @@ export default function Home() {
   const handleReset = () => {
     setRepoUrl("");
     setSessionResults([]);
+    setAnalysisData(null);
     setScreen("landing");
   };
 
@@ -69,7 +83,16 @@ export default function Home() {
 
         {/* Main Screen Router */}
         <main className="flex-1 flex items-center justify-center w-full max-w-5xl mx-auto py-4">
-          {screen === "landing" && <RepoInput onSubmit={handleRepoSubmit} />}
+          {screen === "landing" && (
+            <div className="w-full flex flex-col items-center">
+              <RepoInput onSubmit={handleRepoSubmit} />
+              {errorMsg && (
+                <div className="mt-4 px-4 py-2 bg-[#7A3F33]/30 border border-[#B05A48] text-[#B05A48] rounded text-sm mono text-center max-w-lg">
+                  {errorMsg}
+                </div>
+              )}
+            </div>
+          )}
 
           {screen === "scanning" && (
             <LoadingGrill
@@ -81,18 +104,23 @@ export default function Home() {
           {screen === "verdict" && (
             <VerdictPanel
               repoUrl={repoUrl}
+              analysisData={analysisData}
               onBeginInterview={handleBeginInterview}
             />
           )}
 
           {screen === "interview" && (
-            <InterviewSession onComplete={handleInterviewComplete} />
+            <InterviewSession
+              analysisData={analysisData}
+              onComplete={handleInterviewComplete}
+            />
           )}
 
           {screen === "score" && (
             <ScoreCard
               repoUrl={repoUrl}
               records={sessionResults}
+              analysisData={analysisData}
               onReset={handleReset}
             />
           )}

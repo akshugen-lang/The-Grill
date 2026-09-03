@@ -1,25 +1,74 @@
 "use client";
 
 import React from "react";
-import { ScanVerdict } from "@/types/grill";
-import { MOCK_SCAN_VERDICT } from "@/data/mockData";
+
 import RepoHealthCard from "./RepoHealthCard";
 import AnalysisCoverageCard from "./AnalysisCoverageCard";
 import AgentLegend from "./AgentLegend";
 
 interface VerdictPanelProps {
   repoUrl: string;
-  verdictData?: ScanVerdict;
+  analysisData: any;
   onBeginInterview: () => void;
 }
 
 export default function VerdictPanel({
   repoUrl,
-  verdictData = MOCK_SCAN_VERDICT,
+  analysisData,
   onBeginInterview,
 }: VerdictPanelProps) {
-  const { overallVerdict, riskLevel, repoMeta, firstPassFlags, health, coverage } =
-    verdictData;
+  // Map backend AnalyzeResponse to frontend UI structures
+  const overallVerdict = analysisData?.verdict || "UNKNOWN";
+  
+  // Calculate risk level from score
+  const score = analysisData?.overall_score || 0;
+  let riskLevel = "LOW RISK";
+  if (score < 5) riskLevel = "CRITICAL RISK";
+  else if (score < 7) riskLevel = "MEDIUM RISK";
+
+  const repoMeta = {
+    commits: "N/A", // Backend doesn't fetch commits
+    contributors: "N/A", // Backend doesn't fetch contributors
+    language: analysisData?.meta?.primaryLanguage || "Unknown",
+    activeSpan: "N/A", // Not provided by current backend
+  };
+
+  const health = {
+    score: analysisData?.repo_health?.health_score || 0,
+    hasReadme: analysisData?.repo_health?.has_readme || false,
+    hasTests: analysisData?.repo_health?.has_tests || false,
+    hasCi: analysisData?.repo_health?.has_ci || false,
+    hasEnvExample: analysisData?.repo_health?.has_env_template || false,
+    hasLockfile: analysisData?.repo_health?.has_lockfile || false,
+    todoCount: analysisData?.repo_health?.todo_count || 0,
+    sourceFileCount: analysisData?.repo_health?.source_file_count || 0,
+    languages: Object.keys(analysisData?.repo_health?.language_distribution || {}),
+    largeFilesWarning: analysisData?.repo_health?.unusually_large_files?.length > 0 
+      ? `Found ${analysisData.repo_health.unusually_large_files.length} large files.`
+      : undefined
+  };
+
+  const coverage = {
+    analyzedFilesCount: analysisData?.analysis_coverage?.total_files_analyzed || 0,
+    totalCandidateFilesCount: analysisData?.analysis_coverage?.total_candidates || 0,
+    skippedFilesCount: analysisData?.analysis_coverage?.skipped_files?.length || 0,
+    skippedFilesList: analysisData?.analysis_coverage?.skipped_files || [],
+    truncatedFilesCount: analysisData?.analysis_coverage?.truncated_files?.length || 0,
+    coverageWarning: analysisData?.analysis_coverage?.warnings?.[0]
+  };
+
+  const firstPassFlags = (analysisData?.static_findings || []).map((finding: any) => {
+    let type = "warning";
+    if (finding.severity === "critical" || finding.severity === "high") type = "danger";
+    else if (finding.severity === "low") type = "success";
+    
+    return {
+      type,
+      title: finding.type || "Security Flag",
+      detail: finding.message,
+      file_reference: finding.file_path + (finding.line_number ? `:${finding.line_number}` : "")
+    };
+  });
 
   const getFlagBadgeClass = (type: "success" | "warning" | "danger") => {
     if (type === "success") {
@@ -107,7 +156,7 @@ export default function VerdictPanel({
         </div>
 
         <div className="space-y-3">
-          {firstPassFlags.map((flag, idx) => (
+          {firstPassFlags.map((flag: any, idx: number) => (
             <div
               key={idx}
               className={`bg-[#1B221E] border ${getFlagBorderClass(

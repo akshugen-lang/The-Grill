@@ -43,6 +43,7 @@ export async function POST(request: Request) {
         files: repoData.files,
         repo_health: repoData.repo_health,
         analysis_coverage: repoData.analysis_coverage,
+        static_findings: staticFindings,
         ...analysis
       };
       return NextResponse.json(response);

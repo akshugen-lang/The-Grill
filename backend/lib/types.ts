@@ -86,6 +86,7 @@ export interface AnalyzeResponse {
   improvements: Improvement[];
   repo_health: RepoHealth;
   analysis_coverage: AnalysisCoverage;
+  static_findings?: StaticFinding[];
 }
 
 export interface Message {

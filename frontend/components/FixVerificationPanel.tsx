@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Improvement, FileContent, VerifyFixResponse } from "@/types/grill";
+import { fetchApi } from "@/lib/api";
 
 interface FixVerificationPanelProps {
   improvement: Improvement;
@@ -57,29 +58,28 @@ export default function FixVerificationPanel({
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout safeguard
 
     try {
-      const res = await fetch("/api/verify-fix", {
+      const data: any = await fetchApi<any>("/api/verify-fix", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          issue_id: improvement.id || "unknown",
           improvement,
-          updatedCode: codeContent,
-          filePath: selectedFilePath,
+          updated_code_context: codeContent,
         }),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || `Verification service returned status ${res.status}`);
-      }
-
       if (typeof data !== "object" || typeof data.resolved !== "boolean") {
         throw new Error("Invalid response format received from verification endpoint");
       }
 
-      setResult(data as VerifyFixResponse);
+      setResult({
+        ...data,
+        confidence: data.confidence?.toString() || "Unknown",
+        remainingRisk: data.remaining_risk || "None",
+        nextAction: data.next_action || "Deploy",
+      } as any);
     } catch (err: any) {
       clearTimeout(timeoutId);
       console.error("Fix Verification Error:", err);
